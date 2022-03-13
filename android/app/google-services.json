@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "501960666369",
+    "project_id": "transmusicales-628f0",
+    "storage_bucket": "transmusicales-628f0.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:501960666369:android:330467f83b9a0708a8ff00",
+        "android_client_info": {
+          "package_name": "com.transmusicales.transmusicales"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "501960666369-h5ian0ofk08somo34mk48s8rni5q7mdb.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDBc5IYiVFP7w6llclO-rciTTSzXZkErZ8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "501960666369-h5ian0ofk08somo34mk48s8rni5q7mdb.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
