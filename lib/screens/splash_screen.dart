@@ -4,9 +4,11 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transmusicales/main.dart';
+import 'package:transmusicales/screens/artists.dart';
 
 import '../database/database.dart';
 import '../models/dataset.dart';
+import '../utils/data_utils.dart';
 import '../utils/navigation_utils.dart';
 import 'login_screen.dart';
 
@@ -20,13 +22,13 @@ class SplashPage extends StatefulWidget {
 class _SplashPageState extends State<SplashPage> {
   late SharedPreferences _sharedPreferences;
   late String email;
-  late Future<List<Dataset>> datasets;
 
   @override
   void initState() {
     super.initState();
     instancingSharedPref();
-    Timer(const Duration(seconds: 3), () {
+
+    Timer(const Duration(seconds: 2), () {
       isConnected().then((value) {
         if (value) {
           NavigationUtils.pushReplacement(
@@ -43,40 +45,6 @@ class _SplashPageState extends State<SplashPage> {
               ));
         }
       });
-    });
-  }
-
-  void initNotes() {
-    getNoteCollectionReference().snapshots().forEach((element) {
-      for (var element in element.docs) {
-        var json = jsonEncode(element.data());
-        Map valueMap = jsonDecode(json);
-        datasets.then((value) {
-          value.where((element) => element.id == valueMap['id']).first.note =
-              double.parse(valueMap['note'].toString());
-        });
-      }
-    });
-
-    datasets.then((value1) {
-      for (var element1 in value1) {
-        getNotesCollectionReference()
-          ..where("id", isEqualTo: element1.id)
-              .where("user", isEqualTo: email)
-              .snapshots()
-              .forEach((element) {
-            for (var element in element.docs) {
-              var json = jsonEncode(element.data());
-              Map valueMap = jsonDecode(json);
-              datasets.then((value) {
-                value
-                    .where((element) => element.id == valueMap['id'])
-                    .first
-                    .myNote = double.parse(valueMap['note'].toString());
-              });
-            }
-          });
-      }
     });
   }
 

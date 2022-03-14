@@ -36,10 +36,10 @@ class _ArtistMapStateState extends State<ArtistMap> {
     setState(() {
       datasets = readJson('assets/data/out.json');
       datasets.then((value) {
-        for (var element in value) {
+        for(int i=0; i<2594; i++ ){
           circles.add(Circle(
-            circleId: CircleId(element.id),
-            center: LatLng(element.x, element.y),
+            circleId: CircleId(value[i].id),
+            center: LatLng(value[i].x, value[i].y),
             fillColor: const Color.fromARGB(70, 150, 50, 50),
             strokeColor: Colors.red,
             radius: 2000,
@@ -48,11 +48,11 @@ class _ArtistMapStateState extends State<ArtistMap> {
           ));
 
           markers.add(Marker(
-            markerId: MarkerId(element.id),
-            position: LatLng(element.x, element.y),
+            markerId: MarkerId(value[i].id),
+            position: LatLng(value[i].x, value[i].y),
             infoWindow: InfoWindow(
-                title: element.artistes,
-                snippet: element.annee),
+                title: value[i].artistes,
+                snippet: value[i].annee),
           ));
 
           // mapController.animateCamera(CameraUpdate.newCameraPosition(
@@ -64,7 +64,7 @@ class _ArtistMapStateState extends State<ArtistMap> {
           //   zoom: 17.0,
           // ),));
         }
-      });
+        });
 
     });
 

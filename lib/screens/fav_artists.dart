@@ -17,7 +17,6 @@ import 'artist.dart';
 class FavArtistsSreen extends StatefulWidget {
   final String title;
   final SharedPreferences sharedPreferences;
-
   @override
   _FavArtistsSreen createState() => _FavArtistsSreen();
 
@@ -30,7 +29,7 @@ class _FavArtistsSreen extends State<FavArtistsSreen> {
   late String email;
   String searchString = "";
   String? genreSearchString = "artist";
-  late Future<List<Dataset>> datasets;
+  Future<List<Dataset>>? datasets;
 
   List<DropdownMenuItem<String>> get dropdownItems {
     List<DropdownMenuItem<String>> menuItems = [
@@ -44,17 +43,11 @@ class _FavArtistsSreen extends State<FavArtistsSreen> {
   @override
   void initState() {
     setState(() {
-      datasets = readJson('assets/data/out.json');
       email = widget.sharedPreferences.getString('email')!;
-
-      initNotes();
     });
     super.initState();
   }
 
-  void initNotes() {
-
-  }
 
   Widget _favArtistScreen(BuildContext context) {
     return Column(
@@ -197,9 +190,6 @@ class _FavArtistsSreen extends State<FavArtistsSreen> {
                             onRatingUpdate: (rating) {
                               addNotesArtist(
                                   dataset.id, email, rating);
-                              setState(() {
-                                initNotes();
-                              });
                             },
                           ),
                         ),

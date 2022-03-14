@@ -8,6 +8,8 @@ import 'package:animations/animations.dart';
 import 'package:transmusicales/screens/splash_screen.dart';
 import 'package:transmusicales/services/auth_services.dart';
 
+import 'models/dataset.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
@@ -39,8 +41,8 @@ class MyApp extends StatelessWidget {
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title, required this.sharedPreferences}) : super(key: key);
-
+  const MyHomePage({Key? key, required this.title, required this.sharedPreferences, this.datasets}) : super(key: key);
+  final Future<List<Dataset>>? datasets;
   final String title;
   final SharedPreferences sharedPreferences;
 
@@ -59,7 +61,7 @@ class _MyHomePageState extends State<MyHomePage> {
     pageList = <Widget>[
       ArtistsSreen(title: 'Artistes', sharedPreferences: widget.sharedPreferences,),
       const ArtistMap(title: 'Carte itérative'),
-      FavArtistsSreen(title: 'Artistes préférés', sharedPreferences: widget.sharedPreferences),
+      FavArtistsSreen(title: 'Artistes préférés', sharedPreferences: widget.sharedPreferences,),
     ];
 
     return Scaffold(

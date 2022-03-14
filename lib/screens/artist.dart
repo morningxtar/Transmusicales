@@ -1,16 +1,18 @@
 import 'dart:convert';
-import 'dart:math';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:transmusicales/main.dart';
 import 'package:transmusicales/models/dataset.dart';
+import 'package:transmusicales/services/fetch_data.dart';
 import 'package:transmusicales/utils/data_utils.dart';
 import 'package:transmusicales/utils/navigation_utils.dart';
 
 import '../database/database.dart';
+import '../models/album.dart';
 import '../models/comment.dart';
 import '../services/auth_services.dart';
 import 'artists.dart';
@@ -36,7 +38,6 @@ class _ArtistSreen extends State<ArtistSreen> {
   @override
   void initState() {
     super.initState();
-    print(widget.dataset.id);
   }
 
   Widget _artistScreen(BuildContext context) {
@@ -47,15 +48,6 @@ class _ArtistSreen extends State<ArtistSreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             NavigationUtils.pop(context);
-            // Navigator.pop(
-            //     context,
-            //     MaterialPageRoute(
-            //         builder: (context) =>
-            //             ArtistsSreen(
-            //               title: 'Les Transmusicales',
-            //               sharedPreferences: widget.sharedPreferences,
-            //               datasets: ,
-            //             )));
           }
         ),
         centerTitle: true,
@@ -67,31 +59,42 @@ class _ArtistSreen extends State<ArtistSreen> {
               icon: const Icon(Icons.logout)),
         ],
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: getCommentStream(widget.dataset.id),
-        builder:
-            (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.hasData) {
-            return ListView.builder(
-                itemCount: snapshot.data!.size,
-                itemBuilder: (context, index) {
-                  CommentArtist comment = CommentArtist(
-                      contenu: snapshot.data!.docs[index]
-                      ['comment'],
-                      pseudo: snapshot.data!.docs[index]
-                      ['user']);
-                  return _comment(comment, context);
-                });
-          } else if (snapshot.hasError) {
-            if (kDebugMode) {
-              print("${snapshot.error}");
-            }
-            return const Center(
-                child: CircularProgressIndicator());
-          }
-          return const Center(
-              child: CircularProgressIndicator());
-        },
+      body: Column(
+        children: [
+          artist(widget.dataset),
+          const Padding(
+            padding: EdgeInsets.all(10.0),
+            child: Text('Commentaires',style: TextStyle(fontWeight: FontWeight.bold, fontSize: 30),),
+          ),
+          Expanded(
+            child: StreamBuilder<QuerySnapshot>(
+              stream: getCommentStream(widget.dataset.id),
+              builder:
+                  (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                if (snapshot.hasData) {
+                  return ListView.builder(
+                      itemCount: snapshot.data!.size,
+                      itemBuilder: (context, index) {
+                        CommentArtist comment = CommentArtist(
+                            contenu: snapshot.data!.docs[index]
+                            ['comment'],
+                            pseudo: snapshot.data!.docs[index]
+                            ['user']);
+                        return _comment(comment, context);
+                      });
+                } else if (snapshot.hasError) {
+                  if (kDebugMode) {
+                    print("${snapshot.error}");
+                  }
+                  return const Center(
+                      child: CircularProgressIndicator());
+                }
+                return const Center(
+                    child: CircularProgressIndicator());
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -193,109 +196,172 @@ class _ArtistSreen extends State<ArtistSreen> {
           },
         ));
   }
-}
 
-class MyDelegate extends SliverPersistentHeaderDelegate {
-  final Dataset dataset;
-
-  const MyDelegate(this.dataset);
-
-  @override
-  Widget build(
-      BuildContext context, double shrinkOffset, bool overlapsContent) {
-    var shrinkPercentage =
-        min(1, shrinkOffset / (maxExtent - minExtent)).toDouble();
-
-    return Stack(
-      overflow: Overflow.clip,
-      fit: StackFit.expand,
-      children: [
-        Column(
-          children: [
-            Flexible(
-              flex: 1,
-              child: Stack(
-                children: [
-                  Container(
-                    color: Colors.black,
-                  ),
-                  Opacity(
-                    opacity: 1 - shrinkPercentage,
-                    child: Container(
-                      height: 900,
-                      decoration: const BoxDecoration(
-                          image: DecorationImage(
-                        fit: BoxFit.fitWidth,
-                        alignment: FractionalOffset.topCenter,
-                        image: NetworkImage(
-                            'https://66.media.tumblr.com/c063f0b98040e8ec4b07547263b8aa15/tumblr_inline_ppignaTjX21s9on4d_540.jpg'),
-                      )),
+  Container artist(Dataset dataset){
+    double cWidth = MediaQuery.of(context).size.width*0.4;
+    AlbumSpotify? albumSpotify;
+    if(widget.dataset.spotify != null){
+      fetchSpotifyAlbum(widget.dataset.spotify).then((value) {
+        albumSpotify = value;
+      });
+    }
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: const [
+          BoxShadow(
+            blurRadius: 4,
+            color: Color(0x32000000),
+            offset: Offset(0, 2),
+          )
+        ],
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.max,
+        children: [
+          ClipRRect(
+            borderRadius: const BorderRadius.only(
+              bottomLeft: Radius.circular(0),
+              bottomRight: Radius.circular(0),
+              topLeft: Radius.circular(8),
+              topRight: Radius.circular(8),
+            ),
+            child: albumSpotify?.image != null ? Image.network(albumSpotify?.image) : Icon(Icons.no_photography)
+          ),
+          Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 12, 16, 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              children:  [
+                Expanded(
+                  child: SizedBox(
+                    width: MediaQuery.of(context).size.width*0.9,
+                    child: Text(
+                        'Artist(s) : ${dataset.artistes.toString()}',
+                        style: const TextStyle(
+                          fontFamily: 'Lexend Deca',
+                          color: Color(0xFF242424),
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        )
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-            Container(
-              height: 50,
-            )
-          ],
-        ),
-        Stack(
-          overflow: Overflow.clip,
-          fit: StackFit.expand,
-          children: [
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Opacity(
-                      opacity: max(1 - shrinkPercentage * 6, 0),
+          ),
+          Padding(
+            padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 16, 8),
+            child: Row(
+              mainAxisSize: MainAxisSize.max,
+              children: [
+                Expanded(
+                  child: Column(
+                    children: [
+                      const Text('Origine', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text(
+                          dataset.origine_pays1,
+                          style: const TextStyle(
+                            fontFamily: 'Lexend Deca',
+                            color: Color(0xFF57636C),
+                            fontSize: 14,
+                            fontWeight: FontWeight.normal,
+                          )
+                      ),
+                    ],
+                  ),
+                ),
+                Expanded(
+                  child: Container(
+                    decoration: const BoxDecoration(),
+                    child: Padding(
+                      padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 24, 12),
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
                         children: [
-                          Text(
-                            dataset.artistes,
-                            style: const TextStyle(
-                                fontSize: 48,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white),
-                          ),
-                          Text(
-                            dataset.annee,
-                            style: const TextStyle(color: Colors.white),
+                          const Text('Evènement', style: TextStyle(fontWeight: FontWeight.bold),),
+                          SizedBox(
+                            width: cWidth,
+                            child: Text(
+                                 widget.dataset.edition,
+                                style: const TextStyle(
+                                  fontFamily: 'Lexend Deca',
+                                  color: Color(0xFF57636C),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.normal,
+                                )
+                            ),
                           ),
                         ],
                       ),
                     ),
-                  )
-                ],
-              ),
+                  ),
+                ),
+              ],
             ),
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: Center(child: Container()),
-            )
-          ],
-        ),
-      ],
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: const BoxDecoration(),
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 24, 12),
+                    child: Column(
+                      children: [
+                        const Text('Date', style: TextStyle(fontWeight: FontWeight.bold),),
+                        SizedBox(
+                          width: cWidth,
+                          child: Text(
+                              widget.dataset.date1,
+                              style: const TextStyle(
+                                fontFamily: 'Lexend Deca',
+                                color: Color(0xFF57636C),
+                                fontSize: 14,
+                                fontWeight: FontWeight.normal,
+                              )
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Container(
+                  decoration: const BoxDecoration(),
+                  child: Padding(
+                    padding: const EdgeInsetsDirectional.fromSTEB(16, 0, 24, 12),
+                    child: Column(
+                      children: [
+                        const Text('Salle', style: TextStyle(fontWeight: FontWeight.bold),),
+                        SizedBox(
+                          width: cWidth,
+                          child: Text(
+                              widget.dataset.salle1,
+                              style: const TextStyle(
+                                fontFamily: 'Lexend Deca',
+                                color: Color(0xFF57636C),
+                                fontSize: 14,
+                                fontWeight: FontWeight.normal,
+                              )
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          )
+        ],
+      ),
     );
   }
 
-  @override
-  double get maxExtent => 400;
-
-  @override
-  double get minExtent => 110;
-
-  @override
-  bool shouldRebuild(SliverPersistentHeaderDelegate oldDelegate) => true;
 }
+
 
 Card _comment(CommentArtist commentArtist, BuildContext context) {
   double cWidth = MediaQuery.of(context).size.width * 0.75;
@@ -307,7 +373,7 @@ Card _comment(CommentArtist commentArtist, BuildContext context) {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
             Text(
-              commentArtist.pseudo.toString(),
+              'User : ${commentArtist.pseudo.toString()}',
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             SizedBox(
@@ -318,3 +384,5 @@ Card _comment(CommentArtist commentArtist, BuildContext context) {
     ),
   );
 }
+
+
