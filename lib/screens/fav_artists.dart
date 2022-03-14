@@ -1,28 +1,36 @@
+import 'dart:convert';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transmusicales/database/database.dart';
 import 'package:transmusicales/models/dataset.dart';
 import 'package:transmusicales/utils/data_utils.dart';
+import 'package:url_launcher/url_launcher.dart';
+
+import '../utils/navigation_utils.dart';
+import 'artist.dart';
 
 class FavArtistsSreen extends StatefulWidget {
   final String title;
+  final SharedPreferences sharedPreferences;
 
   @override
   _FavArtistsSreen createState() => _FavArtistsSreen();
 
-  const FavArtistsSreen({Key? key, required this.title}) : super(key: key);
+  const FavArtistsSreen({Key? key, required this.title, required this.sharedPreferences}) : super(key: key);
 }
 
 class _FavArtistsSreen extends State<FavArtistsSreen> {
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   TextEditingController editingController = TextEditingController();
-
-  //final Login _login = Login();
+  late String email;
   String searchString = "";
   String? genreSearchString = "artist";
+  late Future<List<Dataset>> datasets;
 
   List<DropdownMenuItem<String>> get dropdownItems {
     List<DropdownMenuItem<String>> menuItems = [
@@ -35,7 +43,17 @@ class _FavArtistsSreen extends State<FavArtistsSreen> {
 
   @override
   void initState() {
+    setState(() {
+      datasets = readJson('assets/data/out.json');
+      email = widget.sharedPreferences.getString('email')!;
+
+      initNotes();
+    });
     super.initState();
+  }
+
+  void initNotes() {
+
   }
 
   Widget _favArtistScreen(BuildContext context) {
@@ -92,54 +110,41 @@ class _FavArtistsSreen extends State<FavArtistsSreen> {
         ),
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
-            stream: getFavStream('lekouamelan@gmail.com'),
+            stream: getFavStream(email),
             builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-              if (snapshot.connectionState != ConnectionState.waiting) {
-                if (snapshot.hasData) {
-                  return ListView.builder(
-                      itemCount: snapshot.data!.size,
-                      itemBuilder: (context, index) {
-                        Dataset? dataset =
-                            findDatasetById(snapshot.data!.docs[index]['id']);
+              if (snapshot.hasData) {
+                return ListView.builder(
+                    itemCount: snapshot.data!.size,
+                    itemBuilder: (context, index) {
+                      Dataset dataset = Dataset(
+                        id: snapshot.data!.docs[index]['id'],
+                        artistes: snapshot.data!.docs[index]['artists'],
+                        note: snapshot.data!.docs[index]['note'],
+                        myNote: snapshot.data!.docs[index]['myNote'],
+                        origine_pays1: snapshot.data!.docs[index]['pays'],
+                      );
+                      switch (genreSearchString) {
+                        case 'annee':
+                          return dataset.annee
+                              .toLowerCase()
+                              .contains(searchString.toLowerCase())
+                              ? _artist(dataset, context)
+                              : Container();
 
-                        switch (genreSearchString) {
-                          case 'annee':
-                            return dataset!.annee
-                                    .toLowerCase()
-                                    .contains(searchString.toLowerCase())
-                                ? InkWell(
-                                    onTap: () {
-                                      print(dataset);
-                                    },
-                                    child: _artist(dataset),
-                                  )
-                                : Container();
-
-                          case 'pays':
-                            return dataset!.origine_pays1
-                                    .toLowerCase()
-                                    .contains(searchString.toLowerCase())
-                                ? InkWell(
-                                    onTap: () {
-                                      print(dataset);
-                                    },
-                                    child: _artist(dataset),
-                                  )
-                                : Container();
-                          default:
-                            return dataset!.artistes
-                                    .toLowerCase()
-                                    .contains(searchString.toLowerCase())
-                                ? InkWell(
-                                    onTap: () {
-                                      print(dataset);
-                                    },
-                                    child: _artist(dataset),
-                                  )
-                                : Container();
-                        }
-                      });
-                }
+                        case 'pays':
+                          return dataset.origine_pays1
+                              .toLowerCase()
+                              .contains(searchString.toLowerCase())
+                              ? _artist(dataset, context)
+                              : Container();
+                        default:
+                          return dataset.artistes
+                              .toLowerCase()
+                              .contains(searchString.toLowerCase())
+                              ? _artist(dataset, context)
+                              : Container();
+                      }
+                    });
               } else if (snapshot.hasError) {
                 if (kDebugMode) {
                   print("${snapshot.error}");
@@ -162,22 +167,80 @@ class _FavArtistsSreen extends State<FavArtistsSreen> {
       body: _favArtistScreen(context),
     );
   }
-}
 
-Card _artist(Dataset dataset) {
-  return Card(
-    child: Column(
-      children: [
-        Row(
+  InkWell _artist(Dataset dataset, BuildContext context) {
+    return InkWell(
+      onTap: (){
+        NavigationUtils.push(context, ArtistSreen(dataset: dataset, title: 'Les Transmusicales', sharedPreferences: widget.sharedPreferences,));
+      },
+      child: Card(
+        child: Column(
           children: [
-            Text(dataset.artistes),
-            IconButton(
-                onPressed: () => addOrRemoveFavArtist(dataset.id,'lekouamelan@gmail.com'),
-                icon: const Icon(Icons.favorite)
+            Row(
+              children: [
+                Text(dataset.artistes),
+                Expanded(
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: RatingBar.builder(
+                            initialRating: dataset.myNote,
+                            minRating: 1,
+                            direction: Axis.horizontal,
+                            itemSize: MediaQuery.of(context).size.width / 25,
+                            allowHalfRating: true,
+                            itemCount: 5,
+                            itemBuilder: (context, _) => const Icon(
+                              Icons.star,
+                              color: Colors.amber,
+                            ),
+                            onRatingUpdate: (rating) {
+                              addNotesArtist(
+                                  dataset.id, email, rating);
+                              setState(() {
+                                initNotes();
+                              });
+                            },
+                          ),
+                        ),
+                        Container(
+                          width: MediaQuery.of(context).size.width / 15,
+                          height: MediaQuery.of(context).size.width / 15,
+                          decoration: const BoxDecoration(
+                              color: Colors.amber, shape: BoxShape.circle),
+                          alignment: Alignment.center,
+                          child: Text(
+                            dataset.note.toString(),
+                            style: const TextStyle(color: Colors.black, fontSize: 10),
+                          ),
+                        ),
+                      ],
+                    )),
+                Visibility(
+                  visible: dataset.spotify.isNotEmpty,
+                  child: IconButton(
+                    onPressed: () async {
+                      if (await canLaunch(dataset.spotify)) {
+                        // Launch the url which will open Spotify
+                        launch(dataset.spotify);
+                      }
+                    },
+                    icon: Image.asset('assets/icons/spotify.png'),
+                    iconSize: MediaQuery.of(context).size.width / 15,
+                  ),
+                ),
+                IconButton(
+                    onPressed: () =>
+                        addOrRemoveFavArtist(dataset, email),
+                    icon: const Icon(Icons.favorite),
+                    iconSize: MediaQuery.of(context).size.width / 15
+                ),
+              ],
             )
           ],
-        )
-      ],
-    ),
-  );
+        ),
+      ),
+    );
+  }
 }
+

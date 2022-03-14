@@ -13,11 +13,9 @@ import '../models/album.dart';
 Future<AlbumSpotify> fetchSpotifyAlbum(String albumId) async {
   AlbumSpotify albumSpotify = AlbumSpotify();
 
-
   var response =
-      await http.get(Uri.parse('https://open.spotify.com/album/' + albumId));
+      await http.get(Uri.parse('https://open.spotify.com/album/' + albumId.split(':')[2]));
 
-  print(response.body);
   if (response.statusCode == 200) {
     var document = parse(response.body);
 

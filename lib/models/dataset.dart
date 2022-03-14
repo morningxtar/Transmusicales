@@ -17,6 +17,8 @@ class Dataset{
   String deezer;
   String cou_text_en;
   String origine_pays1;
+  double note;
+  double myNote;
   double x;
   double y;
 
@@ -37,12 +39,15 @@ class Dataset{
     this.deezer = '',
     this.cou_text_en = '',
     this.origine_pays1 = '',
+    this.note = 0,
+    this.myNote = 0,
     this.x = 0,
     this.y = 0,
   });
 
   factory Dataset.fromJson(Map<String, dynamic> json) {
     return Dataset(
+      id: json['id'],
       spotify: json['spotify'],
       artistes: json['artistes'],
       deezer: json['deezer'],

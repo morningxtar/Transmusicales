@@ -1,12 +1,14 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:transmusicales/screens/artists.dart';
 import 'package:transmusicales/screens/fav_artists.dart';
 import 'package:transmusicales/screens/map.dart';
-import 'package:transmusicales/utils/data_utils.dart';
 import 'package:animations/animations.dart';
+import 'package:transmusicales/screens/splash_screen.dart';
+import 'package:transmusicales/services/auth_services.dart';
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: const FirebaseOptions(
@@ -27,19 +29,20 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'Les Transmusicales'),
+      home: const SplashPage(),
     );
   }
 }
 
 class MyHomePage extends StatefulWidget {
-  const MyHomePage({Key? key, required this.title}) : super(key: key);
+  const MyHomePage({Key? key, required this.title, required this.sharedPreferences}) : super(key: key);
 
   final String title;
+  final SharedPreferences sharedPreferences;
 
   @override
   State<MyHomePage> createState() => _MyHomePageState();
@@ -48,54 +51,54 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   late List<Widget> pageList;
   int pageIndex = 0;
+  bool connected = false;
+  late Color color = Colors.blue;
 
   @override
   Widget build(BuildContext context) {
     pageList = <Widget>[
-      const ArtistsSreen(title: 'Artistes'),
+      ArtistsSreen(title: 'Artistes', sharedPreferences: widget.sharedPreferences,),
       const ArtistMap(title: 'Carte itérative'),
-      const FavArtistsSreen(title: 'Artistes préférés'),
+      FavArtistsSreen(title: 'Artistes préférés', sharedPreferences: widget.sharedPreferences),
     ];
 
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
+        actions: [
+          IconButton(onPressed: () {
+            logoutApp();
+          }, icon: const Icon(Icons.logout)),
+        ],
       ),
       body: PageTransitionSwitcher(
         transitionBuilder: (child, primaryAnimation, secondaryAnimation) =>
             FadeThroughTransition(
-              animation: primaryAnimation,
-              secondaryAnimation: secondaryAnimation,
-              child: child,
-            ),
+          animation: primaryAnimation,
+          secondaryAnimation: secondaryAnimation,
+          child: child,
+        ),
         child: pageList[pageIndex],
       ),
-
-
       bottomNavigationBar: BottomNavigationBar(
         selectedIconTheme: const IconThemeData(color: Colors.black),
-        selectedItemColor: Colors.black,
+        selectedItemColor: color,
         currentIndex: pageIndex,
         onTap: (value) {
           setState(() {
             pageIndex = value;
+            color = pageIndex == 0
+                ? Colors.blue
+                : pageIndex == 2
+                    ? Colors.pink
+                    : Colors.black;
           });
         },
         type: BottomNavigationBarType.fixed,
         items: const <BottomNavigationBarItem>[
-          BottomNavigationBarItem(
-              icon: Icon(Icons.list),
-              label: 'Artistes'
-          ),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.map),
-              label: 'Carte'
-
-          ),
-          BottomNavigationBarItem(
-              icon: Icon(Icons.favorite),
-              label: 'Favoris'
-          ),
+          BottomNavigationBarItem(icon: Icon(Icons.list), label: 'Artistes'),
+          BottomNavigationBarItem(icon: Icon(Icons.map), label: 'Carte'),
+          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Favoris'),
         ],
       ),
     );

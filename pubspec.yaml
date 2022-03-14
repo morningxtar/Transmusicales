@@ -36,8 +36,6 @@ dependencies:
   cupertino_icons: ^1.0.2
 
   paginate_firestore: ^1.0.3
-  splashscreen: ^1.2.0
-  email_validator: ^1.0.0
   firebase_core: ^1.13.0
   firebase_auth: ^3.3.6
   cloud_firestore: ^3.1.10
@@ -49,6 +47,8 @@ dependencies:
   animations: ^2.0.2
   google_maps_flutter: any
   geolocator: any
+  flutter_rating_bar: any
+  url_launcher: any
 
 dev_dependencies:
   flutter_test:
@@ -76,6 +76,8 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/data/out.json
+    - assets/icons/spotify.png
+    - assets/logo/trans.png
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
@@ -107,4 +109,4 @@ flutter:
 flutter_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/icon/icon.png"
+  image_path: "assets/logo/trans.png"
