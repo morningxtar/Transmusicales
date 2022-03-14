@@ -3,10 +3,12 @@
 Une application qui regroupe un ensemble d'artistes associés à des lieux
 
 <h3>Membres</h3>
-- Kouamelan Franck
-- Ehua Rebecca
-- Sanogo Issa
-- Bah Adama
+<ul>
+<li> Kouamelan Franck</li>
+<li> Ehua Rebecca</li>
+<li> Sanogo Issa</li>
+<li> Bah Adama</li>
+</ul>
 
 <h3>Fonctionnalités</h3>
 <ul>
