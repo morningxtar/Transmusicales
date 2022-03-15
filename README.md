@@ -1,5 +1,5 @@
 <h1># transmusicales</h1>
-
+![alt text](https://github.com/morningxtar/Transmusicales/blob/main/assets/logo/trans.png)
 Une application qui regroupe un ensemble d'artistes associés à des lieux
 
 <h3>Membres</h3>
@@ -26,4 +26,6 @@ Une application qui regroupe un ensemble d'artistes associés à des lieux
 <h3>Utilisateur déjà existant dans la base de donnée</h3>
 user: fe@g.com
 password: aaaaaa 
-    
+
+<h3>L'apk de l'application</h3>
+L'apk se trouve ici [a link](https://github.com/morningxtar/Transmusicales/blob/main/Transmusicales.apk)
