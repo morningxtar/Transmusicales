@@ -109,29 +109,23 @@ class _FavArtistsSreen extends State<FavArtistsSreen> {
                 return ListView.builder(
                     itemCount: snapshot.data!.size,
                     itemBuilder: (context, index) {
-                      Dataset dataset = Dataset(
-                        id: snapshot.data!.docs[index]['id'],
-                        artistes: snapshot.data!.docs[index]['artists'],
-                        note: snapshot.data!.docs[index]['note'],
-                        myNote: snapshot.data!.docs[index]['myNote'],
-                        origine_pays1: snapshot.data!.docs[index]['pays'],
-                      );
+                      Dataset? dataset = findDatasetById(snapshot.data!.docs[index]['id']);
                       switch (genreSearchString) {
                         case 'annee':
-                          return dataset.annee
+                          return dataset!.annee
                               .toLowerCase()
                               .contains(searchString.toLowerCase())
                               ? _artist(dataset, context)
                               : Container();
 
                         case 'pays':
-                          return dataset.origine_pays1
+                          return dataset!.origine_pays1
                               .toLowerCase()
                               .contains(searchString.toLowerCase())
                               ? _artist(dataset, context)
                               : Container();
                         default:
-                          return dataset.artistes
+                          return dataset!.artistes
                               .toLowerCase()
                               .contains(searchString.toLowerCase())
                               ? _artist(dataset, context)
@@ -162,36 +156,58 @@ class _FavArtistsSreen extends State<FavArtistsSreen> {
   }
 
   InkWell _artist(Dataset dataset, BuildContext context) {
+    double cWidth = MediaQuery.of(context).size.width * 0.4;
     return InkWell(
-      onTap: (){
-        NavigationUtils.push(context, ArtistSreen(dataset: dataset, title: 'Les Transmusicales', sharedPreferences: widget.sharedPreferences,));
+      onTap: () {
+        NavigationUtils.push(
+            context,
+            ArtistSreen(
+              dataset: dataset,
+              title: 'Les Transmusicales',
+              sharedPreferences: widget.sharedPreferences,
+            ));
       },
       child: Card(
         child: Column(
           children: [
             Row(
               children: [
-                Text(dataset.artistes),
+                SizedBox(
+                  child: Text(dataset.artistes),
+                  width: cWidth,
+                ),
                 Expanded(
                     child: Row(
                       children: [
                         Expanded(
-                          child: RatingBar.builder(
-                            initialRating: dataset.myNote,
-                            minRating: 1,
-                            direction: Axis.horizontal,
-                            itemSize: MediaQuery.of(context).size.width / 25,
-                            allowHalfRating: true,
-                            itemCount: 5,
-                            itemBuilder: (context, _) => const Icon(
-                              Icons.star,
-                              color: Colors.amber,
-                            ),
-                            onRatingUpdate: (rating) {
-                              addNotesArtist(
-                                  dataset.id, email, rating);
-                            },
-                          ),
+                          child: StreamBuilder<QuerySnapshot>(
+                              stream: getNoteByIdAndUser(dataset.id, email),
+                              builder: (context, snapshot) {
+                                if (snapshot.hasData) {
+                                  double myNote = snapshot.data!.docs.isNotEmpty
+                                      ? snapshot.data!.docs.first['note']
+                                      : 0.0;
+                                  return RatingBar.builder(
+                                    initialRating: myNote,
+                                    minRating: 0,
+                                    direction: Axis.horizontal,
+                                    itemSize:
+                                    MediaQuery.of(context).size.width / 25,
+                                    allowHalfRating: true,
+                                    itemCount: 5,
+                                    itemBuilder: (context, _) => const Icon(
+                                      Icons.star,
+                                      color: Colors.amber,
+                                    ),
+                                    onRatingUpdate: (rating) {
+                                      addNotesArtist(dataset.id, email, rating);
+                                    },
+                                  );
+                                } else{
+                                  return const Center(
+                                      child: LinearProgressIndicator());
+                                }
+                              }),
                         ),
                         Container(
                           width: MediaQuery.of(context).size.width / 15,
@@ -199,10 +215,24 @@ class _FavArtistsSreen extends State<FavArtistsSreen> {
                           decoration: const BoxDecoration(
                               color: Colors.amber, shape: BoxShape.circle),
                           alignment: Alignment.center,
-                          child: Text(
-                            dataset.note.toString(),
-                            style: const TextStyle(color: Colors.black, fontSize: 10),
-                          ),
+                          child: StreamBuilder<QuerySnapshot>(
+                              stream: getNoteById(dataset.id),
+                              builder:
+                                  (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                                if (snapshot.hasData) {
+                                  note = snapshot.data!.docs.isNotEmpty
+                                      ? snapshot.data!.docs.first['note']
+                                      : 0.0;
+                                  return Text(
+                                    note.toString(),
+                                    style: const TextStyle(
+                                        color: Colors.black, fontSize: 10),
+                                  );
+                                } else {
+                                  return const Center(
+                                      child: CircularProgressIndicator());
+                                }
+                              }),
                         ),
                       ],
                     )),
@@ -220,11 +250,9 @@ class _FavArtistsSreen extends State<FavArtistsSreen> {
                   ),
                 ),
                 IconButton(
-                    onPressed: () =>
-                        addOrRemoveFavArtist(dataset, email),
+                    onPressed: () => addOrRemoveFavArtist(dataset, email),
                     icon: const Icon(Icons.favorite),
-                    iconSize: MediaQuery.of(context).size.width / 15
-                ),
+                    iconSize: MediaQuery.of(context).size.width / 15),
               ],
             )
           ],

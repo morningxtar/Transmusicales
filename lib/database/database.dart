@@ -73,7 +73,7 @@ addNotesArtist(String id, String user, double note) {
         'user': user,
         'note': note,
       });
-    } else if (value.size == 1) {
+    } else if (value.size > 1) {
       _notesCollectionReference
           .doc(value.docs.single.id)
           .update({'note': note});
@@ -89,6 +89,10 @@ getAllNoteNoteStream() {
 
 getNoteById(String id){
   return _noteCollectionReference.where("id", isEqualTo: id).snapshots();
+}
+
+getNoteByIdAndUser(String id, String user){
+  return _notesCollectionReference.where("id", isEqualTo: id).where("user", isEqualTo: user).snapshots();
 }
 
 updateNote(String id, double note) {
