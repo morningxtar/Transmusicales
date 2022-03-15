@@ -73,7 +73,7 @@ addNotesArtist(String id, String user, double note) {
         'user': user,
         'note': note,
       });
-    } else if (value.size > 1) {
+    } else {
       _notesCollectionReference
           .doc(value.docs.single.id)
           .update({'note': note});
@@ -102,13 +102,13 @@ updateNote(String id, double note) {
     for (var element in value.docs) {
       var json = jsonEncode(element.data());
       Map valueMap = jsonDecode(json);
-      avgNote = (avgNote + valueMap['note'] / value.docs.length).round();
+      avgNote = (avgNote + valueMap['note'] / value.docs.length);
     }
 
       _noteCollectionReference.where("id", isEqualTo: id).get().then((value1) {
         if (value1.size > 0) {
           _noteCollectionReference.doc(value1.docs.single.id).update({
-            'note': note
+            'note': avgNote
           });
         } else {
           addNote(id, note);
