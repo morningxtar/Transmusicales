@@ -110,7 +110,6 @@ class _ArtistsSreen extends State<ArtistsSreen> {
           child: StreamBuilder<List<Dataset>>(
             stream: Stream.fromFuture(readJson('assets/data/out.json')),
             builder: (context, AsyncSnapshot<List<Dataset>> snapshot) {
-              print(snapshot.data?.length);
               if (snapshot.connectionState != ConnectionState.waiting) {
                 if (snapshot.hasData) {
                   return ListView.builder(

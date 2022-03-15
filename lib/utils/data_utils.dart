@@ -4,12 +4,11 @@ import 'package:flutter/services.dart';
 import 'package:transmusicales/models/dataset.dart';
 
 List<Dataset> _items = [];
-
 // Fetch content from the json file
 Future<List<Dataset>> readJson(String dataPath) async {
   final String response = await rootBundle.loadString(dataPath);
   final data = await json.decode(response);
-
+  _items.clear();
   data.forEach((item) {
     Dataset dataset = Dataset();
     dataset.id = item['recordid'] ?? '';
